@@ -1,0 +1,219 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+```{r}
+plot(rnorm(100))
+```
+
+```{r}
+plot(cars)
+```
+```{r}
+# Data Visualization
+# ggplot2 "grammar of graphics"
+#libraries need to be reloaded for every new session
+library(tidyverse)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file).
+```{r}
+# 3.2 
+# do cars with large engines use more fuel than cars with small engines?
+# what does the relationship between engine size and fuel efficiency look like?
+# use mpg: a data frame containing observations collected by USEPA on cars
+mpg
+```
+image of the mpg data frame
+```{r}
+# plot of the mpg data using ggplot2
+# displ, a car's engine size, is on the x-axis
+# hwy, a car's highway efficiency, on the y-axis
+#geom_point() adds a 'layer' to this graph and makes it a scattor plot
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy))
+```
+--plot of the data from 'mpg' , plotting a car's engine sie on the x-axis, against its highway efficiency on the y-axis
+--looks like cars with largeer engines use more feul (duh)
+```{r}
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = hwy, y = cyl))
+```
+```{r}
+# 3.3 Aesthetic Mappings 
+# adding a 3rd var to a 2D scatter by adding a visual proerty to an object in your plot
+# reproduction of the above plot with class added as a color
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy, color = class))
+```
+```{r}
+#class is an unordered var, so it may not be optimal to map it using size
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy, size = class))
+```
+
+```{r}
+# alpha is transparency
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy, alpha = class))
+
+# shape has six shapes used
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy, shape = class))
+```
+r rules
+```{r}
+# the aesthetic properties may be manually set
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy), color = "pink")
+```
+```{r}
+# the aesthetic properties may be manually set
+#
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy, size = cty))
+
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy, color = cty))
+```
+These plots set a continuous variable (city mileage) to different aedthetic markers
+```{r}
+# 3.5 Facets
+# another method for multi variable data plotting
+# var to facet wrap should be discrete
+
+#example of 1 variable faceting
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy)) +
+  facet_wrap(~class, nrow = 2)
+
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy)) +
+  facet_grid(.~class)
+```
+A plot of highway mileage against display, faceted by class of vehicle, one variable
+```{r}
+# example of 2-var faceting
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy)) +
+  facet_grid(drv~class)
+
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy)) +
+  facet_grid(drv~cyl)
+
+```
+Plot of data faceted on two variables
+```{r}
+# 3.6 Geometric Objects
+# a 'geom' is the geometrical object that a plot uses to represent data
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy))
+
+ggplot(data = mpg) + 
+  geom_smooth(mapping = aes(x = displ, y = hwy))
+
+# these on the same plot
+#note: pass the mappings to the ggplot function to avoid duplication errors
+
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point() + 
+  geom_smooth()
+```
+different geometric representations of the same data
+```{r}
+#different aesthetics can be displayed in different layers
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point(mapping = aes(color = class)) + 
+  geom_smooth()
+```
+same plot as fig 14.c , with the scatter plot colored by class
+```{r}
+# local data arguments will override globals 
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point(mapping = aes(color = class)) + 
+  geom_smooth(data = filter(mpg, class == "subcompact"), se = FALSE)
+```
+Same plot as fig 15 with line filtered to include only class subcompact
+```{r}
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy, color = drv)) + 
+  geom_point() + 
+  geom_smooth(se = FALSE)
+```
+```{r}
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point() + 
+  geom_smooth(mapping = aes(group = drv))
+
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point(mapping = aes(color = drv)) + 
+  geom_smooth(se = FALSE)
+
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point(mapping = aes(color = drv)) + 
+  geom_smooth(mapping = aes(linetype = drv), se = FALSE)
+```
+```{r}
+# Statistical Transforms
+#bar charts, histograms, frequency polygons bin and count data
+#smoothers fit a model to your data, plot predictions come from this model 
+# box plots compute a summary of the distribution of the data
+
+#stat_plot can be used instead of geom_bar here
+ggplot(data = diamonds) +
+  geom_bar(mapping = aes(x = cut))
+```
+chart of diamond count by cut quality
+```{r}
+# use geom_bar to override the default stat
+demo <- tribble(
+  ~cut,         ~freq,
+  "Fair",       1610,
+  "Good",       4906,
+  "Very Good",  12082,
+  "Premium",    13791,
+  "Ideal",      21551
+)
+
+ggplot(data = demo) +
+  geom_bar(mapping = aes(x = cut, y = freq), stat = "identity")
+
+ggplot(data = diamonds) + 
+  stat_summary(
+    mapping = aes(x = cut, y = depth),
+    fun.ymin = min,
+    fun.ymax = max,
+    fun.y = median
+  )
+```
+fig a :plotted against frequency, not simply count
+fig b: statistics summary of cut against depth
+```{r}
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = clarity))
+ggplot(data = diamonds, mapping = aes(x = cut, fill = clarity)) + 
+  geom_bar(alpha = 1/5, position = "identity")
+ggplot(data = diamonds, mapping = aes(x = cut, colour = clarity)) + 
+  geom_bar(fill = NA, position = "identity")
+
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = clarity), position = "fill")
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = clarity), position = "dodge")
+```
+Colored Graphs,introduces a new var, organized by position adjustment
+```{r}
+# jitter to view all data points with a small amount of noise, as view all of them
+#some will be obscured
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy))
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy), position = "jitter")
+```
+Jittered vs. non-jittered

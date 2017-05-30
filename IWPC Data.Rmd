@@ -1,0 +1,137 @@
+---
+title: "IWPC Data Exploration"
+output: html_notebook
+---
+
+
+```{r}
+library(tidyverse)
+
+library(dplyr)
+
+```
+```{r}
+#File from the first Data Set
+sd <- read_csv("/Users/sarahbarili/Desktop/IWPC Project/SubjectData.csv")
+```
+```{r}
+sd
+```
+First 10 tuples of "Subject Data"
+```{r}
+# Ethnicity Data
+ed <- read_csv("/Users/sarahbarili/Desktop/IWPC Project/EthnicityData.csv")
+ed
+```
+"Ethnicity Data"
+```{r}
+NEJM <- read_csv("/Users/sarahbarili/Desktop/IWPC Project/NEJMData.csv")
+NEJM
+```
+Data cleaned for the NEJM study
+```{r}
+# I will proceed using the Ethnicity Data dataset
+#patient counts by age group, including and excluding NA fields
+# Age is a char value, so NA is actually character string "NA"
+# further analysis on age will exclude NA values.  Imputation isn't recommened as missing data accounts for more that 10% of total data
+ed %>%
+  group_by(Age)%>%
+  summarise(count = n())%>%
+  mutate(percent = count/sum(count)*100)
+ed2 <- filter(ed, Age != "NA")
+
+ed2%>%
+  group_by(Age)%>%
+  summarise(count = n())%>%
+  mutate(percent = count/sum(count)*100)
+
+ggplot(ed2) +
+  geom_bar(aes(x = Age), color = "pink", fill = "pink")
+```
+
+```{r}
+
+# Race Information
+ed%>%
+  group_by(`Race (OMB)`)%>%
+  summarise(count = n())%>%
+  mutate(percent = count/sum(count)*100)
+
+ggplot(ed2) +
+  geom_bar(aes(x = `Race (OMB)`), color = "pink", fill = "pink")
+  
+```
+```{r}
+# Height, Weight Information
+height <- summarise(ed,
+  mean = mean(`Height (cm)`, na.rm = TRUE),
+  median = median(`Height (cm)`, na.rm = TRUE),
+  IQR = IQR(`Height (cm)`, na.rm = TRUE)
+)
+height
+
+weight <- summarise(ed,
+  mean = mean(`Weight (kg)`, na.rm = TRUE),
+  median = median(`Weight (kg)`, na.rm = TRUE),
+  IQR = IQR(`Weight (kg)`, na.rm = TRUE)
+)
+weight
+
+
+```
+```{r}
+# Warfarin Dose Information
+
+ed2 <- filter(ed, !is.na(`Therapeutic Dose of Warfarin`))
+
+dose <- summarise(ed,
+  count = n(),
+  mean = mean(`Therapeutic Dose of Warfarin`, na.rm = TRUE),
+  median = median(`Therapeutic Dose of Warfarin`, na.rm = TRUE),
+  IQR = IQR(`Therapeutic Dose of Warfarin`, na.rm = TRUE)
+)
+dose
+
+ggplot(ed2,aes(x = `Therapeutic Dose of Warfarin`))+
+  geom_histogram(binwidth = 5)
+
+ggplot(ed2,aes(x = `Therapeutic Dose of Warfarin`))+
+  geom_histogram(binwidth = 5)+
+  facet_wrap(~ `Race (OMB)`, nrow = 2)
+
+```
+
+```{r}
+# Genotype information
+
+ed%>%
+  group_by(`Cyp2C9 genotypes`)%>%
+  summarise(count = n())%>%
+  mutate(percent = count/sum(count)*100)
+
+ed%>%
+  group_by(ed[[46]])%>%
+  summarise(count = n())%>%
+  mutate(percent = count/sum(count)*100)
+
+```
+```{r}
+ ed%>%
+  group_by(`Amiodarone (Cordarone)`)%>%
+  summarise(count = n())%>%
+  mutate(percent = count/sum(count)*100)
+
+
+ed%>%
+  group_by(`Race (OMB)`)%>%
+  summarise(count = n(),
+            `Dose (mean)` = mean(`Therapeutic Dose of Warfarin`,              na.rm = TRUE),
+            `Height` = mean(`Height (cm)`, na.rm = TRUE),
+            `Weight` = mean(`Weight (kg)`, na.rm = TRUE)
+            )
+
+```
+```{r}
+
+```
+

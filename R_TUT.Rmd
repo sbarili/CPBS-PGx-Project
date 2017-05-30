@@ -217,3 +217,407 @@ ggplot(data = mpg) +
   geom_point(mapping = aes(x = displ, y = hwy), position = "jitter")
 ```
 Jittered vs. non-jittered
+```{r}
+# 3.9 Coordinate systems
+ggplot(data = mpg, mapping = aes(x = class, y = hwy)) + 
+  geom_boxplot()
+ggplot(data = mpg, mapping = aes(x = class, y = hwy)) + 
+  geom_boxplot() +
+  coord_flip()
+```
+flipping coordinate systems is useful for displaying horizantal boxplots 
+```{r}
+install.packages("maps")
+library(maps)
+nz<- map_data("nz")
+
+ggplot(nz, aes(long,lat, group = group)) +
+  geom_polygon(fill = "pink", colour = "black")
+#coord_quickmap sets the correct ratio for geospatial data
+ggplot(nz, aes(long, lat, group = group)) +
+  geom_polygon(fill = "pink", colour = "black") +
+  coord_quickmap()
+```
+```{r}
+bar <- ggplot(data = diamonds) + 
+  geom_bar(
+    mapping = aes(x = cut, fill = cut), 
+    show.legend = FALSE,
+    width = 1
+  ) + 
+  theme(aspect.ratio = 1) +
+  labs(x = NULL, y = NULL)
+
+bar + coord_flip()
+bar + coord_polar()
+```
+```{r}
+# Data Transformation
+library(nycflights13)
+library(tidyverse)
+```
+
+```{r}
+flights
+```
+
+```{r}
+# 5.2 filter
+# select all flights on Jan 1st
+jan1 <-filter(flights, month == 1, day == 1)
+jan1
+```
+```{r}
+nov_dec <- filter(flights, month %in% c(11, 12))
+nov_dec2 <- filter(flights, month == 11 | month == 12)
+```
+
+```{r}
+# 5.3 Arrange
+arrange(flights, year, month, day)
+```
+```{r}
+arrange(flights, desc(arr_delay))
+```
+
+```{r}
+# 5.6 Grouped Summaries
+by_day <- group_by(flights, year, month, day)
+summarise(by_day, delay = mean(dep_delay, na.rm = TRUE))
+```
+
+```{r}
+# explore the relationship betweem the distance and the ang. delay for each location
+#group flights by destination
+#summarize to compute distance, average delay, # of flights
+#filter outliers and honolulu
+#na.rm = TRUE removes missing values
+by_dest <- group_by(flights, dest)
+delay <- summarise(by_dest,
+    count = n(),
+    dist = mean(distance, na.rm = TRUE),
+    delay = mean(arr_delay, na.rm = TRUE)
+)
+
+delay <- filter(delay,count >20, dest != "HNL")
+
+ggplot(data = delay, mapping = aes(x = dist, y = delay)) +
+  geom_point(aes(size = count), alpha = 1/3) +
+  geom_smooth(se = FALSE)
+
+
+#using pipes to make variable naming and analysis easier
+delays <- flights %>% 
+  group_by(dest) %>% 
+  summarise(
+    count = n(),
+    dist = mean(distance, na.rm = TRUE),
+    delay = mean(arr_delay, na.rm = TRUE)
+  ) %>% 
+  filter(count > 20, dest != "HNL")
+```
+```{r}
+batting <- as_tibble(Lahman::Batting)
+
+batters <- batting %>% 
+  group_by(playerID) %>% 
+  summarise(
+    ba = sum(H, na.rm = TRUE) / sum(AB, na.rm = TRUE),
+    ab = sum(AB, na.rm = TRUE)
+  )
+
+batters %>% 
+  filter(ab > 100) %>% 
+  ggplot(mapping = aes(x = ab, y = ba)) +
+    geom_point() + 
+    geom_smooth(se = FALSE)
+#> `geom_smooth()` using method = 'gam'
+```
+```{r}
+# 7 Exploratory Data Analysis
+#Generate Questions about your data
+#search for answers using visualization and transformation, and modeling
+#use what you learn to refine your questions and generate new questions
+
+# 7.3 Variation
+# tendency of the values of a variable to change from measureent to measurement
+# visualizing distributions: categporical or continuous 
+# categorical -- use a bar chart
+ggplot(data = diamonds) +
+  geom_bar(mapping = aes(x = cut))
+diamonds %>%
+  count(cut)
+```
+the hieght of the bars shows how many observations of the data occured at each x value
+```{r}
+# use a histgram for continuous data
+# binwidth organizes each value with set boundaries
+ggplot(data = diamonds) +
+  geom_histogram(mapping = aes(x = carat), binwidth = 0.5)
+
+diamonds %>% 
+  count(cut_width(carat, 0.5))
+#Different binwidths could reveal different realtionships in the data
+smaller <- diamonds %>% 
+  filter(carat < 3)
+  
+ggplot(data = smaller, mapping = aes(x = carat)) +
+  geom_histogram(binwidth = 0.1)
+```
+
+```{r}
+ggplot(data = smaller, mapping = aes(x = carat, colour = cut)) +
+  geom_freqpoly(binwidth = 0.1)
+```
+```{r}
+ggplot(data = faithful, mapping = aes(x = eruptions)) + 
+  geom_histogram(binwidth = 0.1)
+```
+
+```{r}
+# 7.5 Covariation
+# tencdency for two values to be related
+# how does the price of a diamond vary with its quality?
+
+ggplot(data = diamonds, mapping = aes(x = cut, y = price)) +
+  geom_boxplot()
+
+ggplot(data = diamonds, mapping = aes(x = price, y = ..density..)) + 
+  geom_freqpoly(mapping = aes(colour = cut), binwidth = 500)
+
+ggplot(diamonds) + 
+  geom_bar(mapping = aes(x = cut))
+```
+```{r}
+# how does highway mileage vary across classes of vehicles?
+ggplot(data = mpg) +
+  geom_boxplot(mapping = aes(x = reorder(class, hwy, FUN = median), y = hwy))
+```
+
+```{r}
+# Two categorical variables
+ggplot(data = diamonds) +
+  geom_count(mapping = aes(x = cut, y = color))
+```
+
+```{r}
+diamonds %>% 
+  count(color, cut) %>%  
+  ggplot(mapping = aes(x = color, y = cut)) +
+    geom_tile(mapping = aes(fill = n))
+```
+```{r}
+# two continuous variables
+ggplot(data = diamonds) +
+  geom_point(mapping = aes(x = carat, y = price))
+```
+
+```{r}
+#binning for two continuous variables is helpful to visualize large data
+
+ggplot(data = smaller) +
+  geom_bin2d(mapping = aes(x = carat, y = price))
+
+install.packages("hexbin")
+ggplot(data = smaller) +
+  geom_hex(mapping = aes(x = carat, y = price))
+```
+
+```{r}
+#another option is to bin one continuous variable so it behaves like a categorical variable
+ggplot(data = smaller, mapping = aes(x = carat, y = price)) + 
+  geom_boxplot(mapping = aes(group = cut_width(carat, 0.1)))
+```
+
+```{r}
+
+# 7 Patterns and models
+# build a model that predicts price from carat
+#computes residuals
+library(modelr)
+
+mod <- lm(log(price) ~ log(carat), data = diamonds)
+diamonds2 <- diamonds %>% 
+  add_residuals(mod) %>% 
+  mutate(resid = exp(resid))
+
+ggplot(data = diamonds2) + 
+  geom_point(mapping = aes(x = carat, y = resid))
+
+```
+relative to size, better quality diamonds are more expensive
+```{r}
+ggplot(data = diamonds2) + 
+  geom_boxplot(mapping = aes(x = cut, y = resid))
+```
+
+```{r}
+
+# same code
+
+ggplot(data = faithful, mapping = aes(x = eruptions)) + 
+  geom_freqpoly(binwidth = 0.25)
+ggplot(faithful, aes(eruptions)) + 
+  geom_freqpoly(binwidth = 0.25)
+```
+```{r}
+#Data Wrangling
+#getting your data into R 
+#import, tidy, transform
+# 10 Tibbles
+# tibbles are data frames 
+library(tidyverse)
+```
+
+```{r}
+#coerce a regualr data frame to a tibble
+as_tibble(iris)
+
+```
+
+```{r}
+#create a 5X3 tibble
+tibble(
+  x = 1:5, 
+  y = 1, 
+  z = x ^ 2 + y
+)
+```
+
+```{r}
+
+
+tibble(
+  a = lubridate::now() + runif(1e3) * 86400,
+  b = lubridate::today() + runif(1e3) * 30,
+  c = 1:1e3,
+  d = runif(1e3),
+  e = sample(letters, 1e3, replace = TRUE)
+)
+```
+
+```{r}
+#tibbles will automatically print the first 10 rows of a tibble
+#this can be customized
+nycflights13::flights %>% 
+  print(n = 10, width = Inf)
+```
+```{r}
+df <- tibble(
+  x = runif(5),
+  y = rnorm(5)
+)
+# Subsetting
+# [[ ]] extracts by name or position
+df[[1]]
+df[["x"]]
+# $ extracts by name wih less typing
+df$x
+
+#use in a pipe
+df %>% .$x
+df %>% .[["x"]]
+
+```
+
+```{r}
+# 23  Model Basics
+library(tidyverse)
+library(modelr)
+options(na.action = na.warn)
+# Define a family of models that express a precise, but generic pattern (i.e. a line, quadratic, etc)
+# generate a fitted model by making the generic model more specific
+
+ggplot(sim1, aes(x, y)) + 
+  geom_point()
+```
+Simulated Plot with a strong pattern
+```{r}
+#randomly generate a few models and overlay them on the data
+models <- tibble(
+  a1 = runif(250, -20, 40),
+  a2 = runif(250, -5, 5)
+)
+ggplot(sim1, aes(x, y)) + 
+  geom_abline(aes(intercept = a1, slope = a2), data = models, alpha = 1/4) +
+  geom_point()
+```
+Our data with a bunch of shitty models
+```{r}
+# quantify the distance between the data and a model
+# generate model with the smallest distance from the data 
+# Step 1: turn model family into an R function
+model1 <- function(a, data) {
+  a[1] + data$x * a[2]
+}
+model1(c(7, 1.5), sim1)
+measure_distance <- function(mod, data) {
+  diff <- data$y - model1(mod, data)
+  sqrt(mean(diff ^ 2))
+}
+
+
+
+```
+
+```{r}
+# root-mean-squared deviation
+measure_distance(c(7, 1.5), sim1)
+```
+```{r}
+#use purrr function to compute the distance for all bove defined models
+sim1_dist <- function(a1, a2) {
+  measure_distance(c(a1, a2), sim1)
+}
+
+models <- models %>% 
+  mutate(dist = purrr::map2_dbl(a1, a2, sim1_dist))
+models
+```
+```{r}
+# overlay the 10 best models onto the the data
+ggplot(sim1, aes(x, y)) + 
+  geom_point(size = 2, colour = "grey30") + 
+  geom_abline(
+    aes(intercept = a1, slope = a2, colour = -dist), 
+    data = filter(models, rank(dist) <= 10)
+  )
+
+ggplot(sim1, aes(x, y)) + 
+  geom_point(size = 2, colour = "grey30") + 
+  geom_abline(
+    aes(intercept = a1, slope = a2, colour = -dist), 
+    data = filter(models, rank(dist) <= 1)
+  )
+```
+```{r}
+ggplot(models, aes(a1, a2)) +
+  geom_point(data = filter(models, rank(dist) <= 10), size = 4, colour = "red") +
+  geom_point(aes(colour = -dist))
+```
+
+```{r}
+#grid search for best model
+grid <- expand.grid(
+  a1 = seq(-5, 20, length = 25),
+  a2 = seq(1, 3, length = 25)
+  ) %>% 
+  mutate(dist = purrr::map2_dbl(a1, a2, sim1_dist))
+
+grid %>% 
+  ggplot(aes(a1, a2)) +
+  geom_point(data = filter(grid, rank(dist) <= 10), size = 4, colour = "red") +
+  geom_point(aes(colour = -dist)) 
+```
+```{r}
+ggplot(sim1, aes(x, y)) + 
+  geom_point(size = 2, colour = "grey30") + 
+  geom_abline(
+    aes(intercept = a1, slope = a2, colour = -dist), 
+    data = filter(grid, rank(dist) <= 10)
+  )
+```
+```{r}
+
+```
+

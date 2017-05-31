@@ -56,10 +56,19 @@ ed%>%
   group_by(`Race (OMB)`)%>%
   summarise(count = n())%>%
   mutate(percent = count/sum(count)*100)
+ed%>%
+  group_by(`Race (Reported)`)%>%
+  summarise(count = n())%>%
+  mutate(percent = count/sum(count)*100)
 
 ggplot(ed2) +
   geom_bar(aes(x = `Race (OMB)`), color = "pink", fill = "pink")
-  
+ggplot(ed2) +
+  geom_bar(aes(x = `Race (Reported)`), color = "pink", fill = "pink")  
+
+ggplot(ed2) +
+  geom_bar(aes(x = `Race (Reported)`), color = "pink", fill = "pink")+
+  facet_wrap(~`Race (OMB)`, nrow=2)
 ```
 ```{r}
 # Height, Weight Information
@@ -100,7 +109,7 @@ ggplot(ed2,aes(x = `Therapeutic Dose of Warfarin`))+
   facet_wrap(~ `Race (OMB)`, nrow = 2)
 
 ```
-
+Dose of Warfarin, plotted altogther and split on race
 ```{r}
 # Genotype information
 
@@ -132,6 +141,36 @@ ed%>%
 
 ```
 ```{r}
+# After initial exploration of the datas sets, could aspects of them be used to explain the disparity of the alg's performance interacially?
+# will including additional variants improve the performance of the alg?
+# will using percent african american improve the performance?
+# can other factors be attributed to the performance (vit K consumption, smoking, etc)
+# predicting within single ancestry groups?
+
+
+# Percentage of smokers by racial group
+ed%>%
+  group_by(`Race (OMB)`,`Current Smoker`)%>%
+  summarise(count = n())%>%
+  mutate(percent = count/sum(count)*100)
+
+ed%>%
+  group_by(`Current Smoker`)%>%
+  summarise(count = n())%>%
+  mutate(percent = count/sum(count)*100)
+```
+From this data, African American patients had the highest instance of smokers 
+
+```{r}
+dose_compare =NEJM %>% 
+  group_by(dose,pred.dose) %>% 
+  tally()
+
+ggplot(NEJM, aes(dose,pred.dose))+
+  geom_point(size = .01)+
+  facet_wrap(~ NEJM[[5]], nrow = 2)
+
 
 ```
+
 
